@@ -1,3 +1,6 @@
+
+
+
 def getCRC(data, divisor_key):
     position = len(divisor_key)                 # Position of bit to be dropped | determined by number of bits to XOR
     dividend = data + '0'*(position-1)          # Append n bits to data
@@ -43,3 +46,9 @@ def toText(binary_str):
     binary_bytes = [binary_str[i:i+8] for i in range(0, len(binary_str), 8)]    #slice the binary string into chunks of 8
     int_bytes = [int(byte, 2) for byte in binary_bytes]                         #take each byte (binary form) and convert to an integer (specifying base-2) 
     return bytes(int_bytes).decode()                                            #convert list of bytes (integer form) into a bytes object which could then be decoded and returned
+
+def getCRCMsg(message, key):
+    binaryMsg = toBinary(message)
+    binaryCRC = getCRC(binaryMsg, key)
+    finalMsg = binaryMsg + binaryCRC
+    return finalMsg
