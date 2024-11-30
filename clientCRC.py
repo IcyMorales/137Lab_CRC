@@ -52,7 +52,7 @@ class ChatClient:
             try:                                                                # keep looping and receiving messages
                 binaryWithCRC = self.client_socket.recv(1024).decode()
                 if binaryWithCRC:
-                    if int(crcM.getCRC(binaryWithCRC,key)) == 0:                                # if Mod 2 Division returns a 0, accept message
+                    if int(crcM.getCRC(binaryWithCRC, key)) == 0:                                # if Mod 2 Division returns a 0, accept message
                         message = crcM.toText(binaryWithCRC[:-(len(key)-1)])                    # convert binary (w/ CRC removed) back to Text
                         self.display_message(message)                                           # display accepted message
                     else:
@@ -68,13 +68,10 @@ class ChatClient:
 
     def send_message(self, event=None):
         message = self.message_entry.get()
-        binaryMSG = crcM.toBinary(message)                      # Unicode Message -> Binary (string)
-        binaryCRC = crcM.getCRC(binaryMSG,key)                  # Use Binary message and key (Generator polynomial in binary) to get CRC (binary)
-        finalMSG = binaryMSG+binaryCRC                          # Binary Message + CRC -> Final Message
-        toBeTransmittedMSG = crcM.corrupt5chance(5, finalMSG)   ################To Be Implemented in CRC module################
+        crcMessage = crcM.getCRCMsg(message, self.key)
         if message:
             # Send the message to the server
-            self.client_socket.send(finalMSG.encode())
+            self.client_socket.send(crcMessage.encode())
             # Display the sent message in the chat area
             self.display_message("You: " + message)
             # Clear the message entry box

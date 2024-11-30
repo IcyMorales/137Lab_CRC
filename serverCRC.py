@@ -103,13 +103,13 @@ class ChatServer:
                 if int(crcM.getCRC(binaryWithCRC,key)) == 0:                                # if Mod 2 Division returns a 0, accept message
                     message = crcM.toText(binaryWithCRC[:-(len(key)-1)])                    # convert binary (w/ CRC removed) back to Text
                     self.display_message(f"[{client_name}] {message}")
+                    
+                    # Broadcast the accepted message to other clients
+                    crcMessage = crcM.getCRCMsg(f"[{client_name}]: {message}", self.key)   # Same as send_message() but without corruption
+                    self.broadcast_message(crcMessage, client_socket)
                 else:
-                    self.display_message(f"[{client_name}][CRC ERROR | Received corrupted message data.]")  # discard message and inform user regarding corruption
-
-                # Broadcast the accepted message to other clients
-                crcMessage = crcM.getCRCMsg(f"[{client_name}] {message}", self.key)   # Same as send_message() but without corruption
-                self.broadcast_message(crcMessage, client_socket)
-    
+                    self.display_message(f"[CRC ERROR | Received corrupted message data from {client_name}]")  # discard message and inform user regarding corruption
+        
         except ConnectionResetError:
             crcMessage = crcM.getCRCMsg(f"Client [{client_address}|{client_name}] disconnected abruptly.", self.key)   # Same as send_message() but without corruption
             self.broadcast_message(crcMessage, client_socket)
@@ -126,9 +126,7 @@ class ChatServer:
 
     def send_message(self, event=None):
         message = self.message_entry.get()
-        crcMessage = crcM.getCRCMsg(message, self.key)   # Same as send_message() but without corruption
-        # self.broadcast_message(crcMessage, client_socket)        
-        toBeTransmittedMSG = crcM.corrupt5chance(5, crcMessage)   ################To Be Implemented in CRC module################
+        crcMessage = crcM.getCRCMsg(f"server[{self.server_name}]: {message}", self.key)   # Same as send_message() but without corruption
         if message:
             # Send the message to the clients
             self.broadcast_message(crcMessage)

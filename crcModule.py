@@ -1,5 +1,5 @@
 
-
+import random
 
 def getCRC(data, divisor_key):
     position = len(divisor_key)                 # Position of bit to be dropped | determined by number of bits to XOR
@@ -26,16 +26,15 @@ def xor(a, b):
     ans = ''
     for i in range(max_len):
         ans = ans + str(int(a[i])^int(b[i]))    # Loop through their length and keep appending XOR [^] result to ans
-    
     return ans                                  # Return XOR result (a string of binary)
 
-def corrupt5chance(binary_str, percent):
-    #binary_str -> binary
-    #{percent}% chance of happening:
-        #binary = binary + 1 bit
-    #binary -> binary_str
+def corruptMessage(binary_str):
+    corruptChance = 0.05
+    if random.random() < corruptChance:         # if the generated number is [0.00 - 0.04] or 5/100
+        corruptedDecimalRep = int(binary_str, 2) + 1     # Convert to decimal and add 1
+        binary_str = bin(corruptedDecimalRep)[2:]           #convert back to binary
     return binary_str
-    pass
+
     
 def toBinary(str):
     bytes = str.encode()                                    # Turn string into bytes
@@ -48,7 +47,7 @@ def toText(binary_str):
     return bytes(int_bytes).decode()                                            #convert list of bytes (integer form) into a bytes object which could then be decoded and returned
 
 def getCRCMsg(message, key):
-    binaryMsg = toBinary(message)
-    binaryCRC = getCRC(binaryMsg, key)
-    finalMsg = binaryMsg + binaryCRC
+    binaryMsg = toBinary(message)   # converting message to binary string represenration
+    binaryCRC = getCRC(binaryMsg, key)  # get the CRC
+    finalMsg = corruptMessage(binaryMsg + binaryCRC) # 5% chance to be corrupted during transmission
     return finalMsg
