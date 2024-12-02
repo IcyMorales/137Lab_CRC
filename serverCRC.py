@@ -72,11 +72,11 @@ class ChatServer:
                 connectFlAG = False
                 client_socket.send("You entered the wrong KEY. Please disconnect and reconnect with the correct KEY.\n".encode())                                   # tell client to reconnect
                 self.display_message(f"Client [{client_name}] entered the wrong KEY:{client_key}. They need to disconnect and reconnect with the correct KEY.\n")   # display error on server GUI
-                crcMessage = crcM.getCRCMsg(f"[{client_name}] entered the chat with [key error].\n", self.key)                                                                                                                    
-                self.broadcast_message(crcMessage, client_socket)
+                crcMessage = crcM.getCRCMsg(f"[{client_name}] entered the chat with [key error].\n", self.key)
+                self.broadcast_message(f"server notice_{crcM.corruptMessage(crcMessage)}", client_socket)
             else:                                                                              # Same as send_message() | tell the others the client entered normally
-                crcMessage = crcM.getCRCMsg(f"[{client_name}] has entered the chat.\n", self.key)                                                                                                            
-                self.broadcast_message(crcMessage, client_socket)
+                crcMessage = crcM.getCRCMsg(f"[{client_name}] has entered the chat.\n", self.key)                                                                  
+                self.broadcast_message(f"server notice_{crcM.corruptMessage(crcMessage)}", client_socket)
             
             # Start a new thread for each client
             client_thread = threading.Thread(target=self.handle_client, args=(client_socket, client_address, client_name, connectFlAG))
@@ -102,18 +102,16 @@ class ChatServer:
 
                 if int(crcM.getCRC(binaryWithCRC,key)) == 0:                                # if Mod 2 Division returns a 0, accept message
                     message = crcM.toText(binaryWithCRC[:-(len(key)-1)])                    # convert binary (w/ CRC removed) back to Text
-                    self.display_message(f"[{client_name}] {message}")
-                    # Broadcast the accepted message to other clients
-                    crcMessage = crcM.getCRCMsg(f"[{client_name}]: {message}", self.key)   # Same as send_message() but without corruption
-                    self.broadcast_message(crcMessage, client_socket)
-
+                    self.display_message(f"[{client_name}]\n{binaryWithCRC}\nValid: Yes\n  MSG: {message}")
                 else:
-                    self.display_message(f"[CRC ERROR | Received corrupted message data from {client_name}]")  # discard message and inform user regarding corruption
-                    self.broadcast_message(binaryWithCRC, client_socket)
+                    self.display_message(f"{binaryWithCRC}\n[ CRC ERROR | Received corrupted message data from {client_name}]")  # discard message and inform user regarding corruption
+
+                # Broadcast the accepted message to other clients
+                self.broadcast_message(f"{client_name}_{crcM.corruptMessage(binaryWithCRC)}", client_socket)
 
         except ConnectionResetError:
             crcMessage = crcM.getCRCMsg(f"Client [{client_address}|{client_name}] disconnected abruptly.", self.key)   # Same as send_message() but without corruption
-            self.broadcast_message(crcMessage, client_socket)
+            self.broadcast_message(f"server notice_{crcM.corruptMessage(crcMessage)}", client_socket)
             self.display_message(f"Client [{client_address}|{client_name}] disconnected abruptly.")
         finally:
             # Remove the client from the client list and close the connection
@@ -127,12 +125,13 @@ class ChatServer:
 
     def send_message(self, event=None):
         message = self.message_entry.get()
-        crcMessage = crcM.getCRCMsg(f"server[{self.server_name}]: {message}", self.key)   # Same as send_message() but without corruption
+        crcMessage = crcM.getCRCMsg(message, self.key)   # Get CRC'd equivalent
+        corruptBIN = crcM.corruptMessage(crcMessage)
         if message:
             # Send the message to the clients
-            self.broadcast_message(crcMessage)
+            self.broadcast_message(f"server|{self.server_name}_{corruptBIN}")
             # Display the sent message in the chat area
-            self.display_message("You: " + message)
+            self.display_message(f"You: {message}\n{crcMessage}")
             # Clear the message entry box
             self.message_entry.delete(0, tk.END)
             # Exit if the message is "exit"

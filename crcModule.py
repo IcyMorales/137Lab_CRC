@@ -29,7 +29,7 @@ def xor(a, b):
     return ans                                  # Return XOR result (a string of binary)
 
 def corruptMessage(binary_str):
-    corruptChance = 0.05
+    corruptChance = 0.05                # 5% chance to be corrupted during transmission
     if random.random() < corruptChance:         # if the generated number is [0.00 - 0.04] or 5/100
         corruptedDecimalRep = int(binary_str, 2) + 1     # Convert to decimal and add 1
         binary_str = bin(corruptedDecimalRep)[2:]           #convert back to binary
@@ -49,5 +49,5 @@ def toText(binary_str):
 def getCRCMsg(message, key):
     binaryMsg = toBinary(message)   # converting message to binary string represenration
     binaryCRC = getCRC(binaryMsg, key)  # get the CRC
-    finalMsg = corruptMessage(binaryMsg + binaryCRC) # 5% chance to be corrupted during transmission
+    finalMsg = binaryMsg+binaryCRC
     return finalMsg

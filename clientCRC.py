@@ -50,13 +50,13 @@ class ChatClient:
 
         while self.running:
             try:                                                                # keep looping and receiving messages
-                binaryWithCRC = self.client_socket.recv(1024).decode()
+                cName, binaryWithCRC = self.client_socket.recv(1024).decode().split("_")
                 if binaryWithCRC:
                     if int(crcM.getCRC(binaryWithCRC, key)) == 0:                                # if Mod 2 Division returns a 0, accept message
                         message = crcM.toText(binaryWithCRC[:-(len(key)-1)])                    # convert binary (w/ CRC removed) back to Text
-                        self.display_message(message)                                           # display accepted message
+                        self.display_message(f"[{cName}]\n{binaryWithCRC}\nValid: Yes\n  MSG: {message}")                                           # display accepted message
                     else:
-                        self.display_message("[CRC ERROR | Received corrupted message data.]")  # discard message and inform user regarding corruption
+                        self.display_message(f"[{cName}]\n{binaryWithCRC}\n[CRC ERROR | Received corrupted message data.]")  # discard message and inform user regarding corruption
                 else:
                     break
             except ConnectionAbortedError:                                      # stop loop when connection is lost
@@ -69,11 +69,12 @@ class ChatClient:
     def send_message(self, event=None):
         message = self.message_entry.get()
         crcMessage = crcM.getCRCMsg(message, self.key)
+        corruptBIN = crcM.corruptMessage(crcMessage)
         if message:
             # Send the message to the server
-            self.client_socket.send(crcMessage.encode())
+            self.client_socket.send(corruptBIN.encode())
             # Display the sent message in the chat area
-            self.display_message("You: " + message)
+            self.display_message(f"You: {message}\n{crcMessage}")
             # Clear the message entry box
             self.message_entry.delete(0, tk.END)
             # Exit if the message is "exit"
