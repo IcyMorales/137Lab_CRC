@@ -103,13 +103,14 @@ class ChatServer:
                 if int(crcM.getCRC(binaryWithCRC,key)) == 0:                                # if Mod 2 Division returns a 0, accept message
                     message = crcM.toText(binaryWithCRC[:-(len(key)-1)])                    # convert binary (w/ CRC removed) back to Text
                     self.display_message(f"[{client_name}] {message}")
-                    
                     # Broadcast the accepted message to other clients
                     crcMessage = crcM.getCRCMsg(f"[{client_name}]: {message}", self.key)   # Same as send_message() but without corruption
                     self.broadcast_message(crcMessage, client_socket)
+
                 else:
                     self.display_message(f"[CRC ERROR | Received corrupted message data from {client_name}]")  # discard message and inform user regarding corruption
-        
+                    self.broadcast_message(binaryWithCRC, client_socket)
+
         except ConnectionResetError:
             crcMessage = crcM.getCRCMsg(f"Client [{client_address}|{client_name}] disconnected abruptly.", self.key)   # Same as send_message() but without corruption
             self.broadcast_message(crcMessage, client_socket)
